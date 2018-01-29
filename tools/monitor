@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# Background
+#
+# There are a few differences between the top command used by OS X
+# and Linux. As a simple work-around, this script provides a simple but portable
+# alternative for monitoring processes with a specified command name.
+
+# Author: Karl Marklund <karl.marklund@it.uu.se>
+#
+# 2016-11-27: First version.
+
+delay=1;
+
+function usage {
+    cat <<EOF
+Usage: `basename $0` [-s delay] [-p pid] cmd
+
+A top-like command that only lists USER, PID, STAT and COMM for the
+current user and and proceses with a command name with a grep match of cmd.
+
+Options:
+ -s delay    Delay in seconds between refresh, default = $delay.
+ -p pid      Include process with PID pid.
+EOF
+}
+
+while getopts ":h?s:p:": opt;
+do
+    case "$opt" in
+        h|\?) usage
+              exit 0
+              ;;
+        s) 
+            if ! [[ $OPTARG =~ ^([0-9]*.)?[0-9]+$ ]]; then
+                echo "error: $OPTARG is not a valid delay (float or integer)."
+                echo 
+                usage
+               exit 0
+           fi
+           delay=${OPTARG}
+            ;;
+        p) pid=${OPTARG}
+            ;;
+    esac
+done
+
+shift $(($OPTIND - 1))
+
+cmd=`dirname $0`/my-ps
+
+if [[ $pid ]]; then cmd="$cmd -p $pid"; fi
+
+
+if [[ $1 ]] ; then
+    cmd="$cmd $1"
+else
+    usage
+    exit 0
+fi
+
+
+while :;
+do
+    clear
+    echo "Monitoring processes matching: $1"
+    echo
+    echo "Press Ctrl-C to exit"
+    echo
+    $cmd $1
+    sleep $delay
+done

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+function usage {
+    cat <<EOF
+Usage: my-ps [-p pid] cmd
+
+A variation on the ps command that only lists USER, PID, STAT and COMM for the
+current user. If the optional argument cmd is provided, only processes with
+command name cmd are listed.
+EOF
+
+}
+
+cmd="ps -o user,pid,ppid,state,comm"
+
+while getopts "h?p:" opt;
+do
+    case "$opt" in
+        h|\?) usage
+              exit 0
+              ;;
+        p)
+           pid=${OPTARG}
+           ;;
+    esac
+done
+
+
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+    usage
+    exit 0
+fi
+
+# Print header
+$cmd -u $USER |  head -n1 
+
+if [[ $1 ]] ; then
+    $cmd -u $USER | grep $1
+fi
+
+if [[ $pid ]] ; then
+      $cmd -p $pid | tail -n +2
+fi
